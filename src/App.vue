@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <nav>
+    <nav v-if="showNav">
       <ul>
         <li><router-link to="/login">Login</router-link></li>
         <li><router-link to="/register">Register</router-link></li>
@@ -13,8 +13,14 @@
 <script>
 export default {
   name: 'App',
+  computed: {
+    showNav() {
+      return this.$route.name !== 'Dashboard';
+    }
+  }
 };
 </script>
+
 
 <style>
 #app {

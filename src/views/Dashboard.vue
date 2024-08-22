@@ -1,15 +1,19 @@
 <template>
   <div class="dashboard">
     <div class="header">
-      <button @click="logout" class="logout-button">Logout</button>
       <button @click="createNewProject" class="create-button">Create New Project</button>
+      <button @click="logout" class="logout-button">Logout</button>
     </div>
 
     <div class="content">
       <h2>Project Management System</h2>
-      <input type="date" v-model="dateRange.start" @change="fetchProjects" />
-      <input type="date" v-model="dateRange.end" @change="fetchProjects" />
-      <table>
+      <div class="date-filters">
+        <label for="start-date">Start Date: </label>
+        <input id="start-date" type="date" v-model="dateRange.start" @change="fetchProjects" />
+        <label for="end-date"> End Date: </label>
+        <input id="end-date" type="date" v-model="dateRange.end" @change="fetchProjects" />
+      </div>
+      <table v-if="projects.length">
         <thead>
           <tr>
             <th>Name</th>
@@ -32,6 +36,7 @@
           </tr>
         </tbody>
       </table>
+      <p v-else>No projects found for the selected date range.</p>
     </div>
 
     <ProjectForm v-if="showProjectForm" :projectId="currentProjectId" @success="handleFormSuccess" />
@@ -70,9 +75,14 @@ export default {
       return `${year}-${month}-${lastDay}`;
     },
     async fetchProjects() {
-      const { start, end } = this.dateRange;
-      const response = await api.get(`/api/v1/projects/list?start=${start}&end=${end}`);
-      this.projects = response.data;
+      try {
+        const { start, end } = this.dateRange;
+        const response = await api.get(`/api/v1/projects/list?start=${start}&end=${end}`);
+        this.projects = response.data;
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        // Optionally show a user-friendly message
+      }
     },
     getStatusLabel(status) {
       return status === 0 ? 'Pre' : status === 1 ? 'Start' : 'End';
@@ -87,8 +97,13 @@ export default {
     },
     async deleteProject(id) {
       if (confirm('Are you sure you want to delete this project?')) {
-        await api.delete(`/api/v1/projects/delete/${id}`);
-        this.fetchProjects();
+        try {
+          await api.delete(`/api/v1/projects/delete/${id}`);
+          this.fetchProjects();
+        } catch (error) {
+          console.error('Error deleting project:', error);
+          // Optionally show a user-friendly message
+        }
       }
     },
     handleFormSuccess() {
@@ -113,8 +128,22 @@ export default {
 
 .header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-bottom: 20px;
+}
+
+.create-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  cursor: pointer;
+  margin-right: auto;
+}
+
+.create-button:hover {
+  background-color: #0056b3;
 }
 
 .logout-button {
@@ -135,7 +164,29 @@ export default {
   margin: 0 auto;
 }
 
+.date-filters {
+  margin-bottom: 20px;
+}
+
 h2 {
   text-align: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table, th, td {
+  border: 1px solid #ddd;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f4f4f4;
 }
 </style>
